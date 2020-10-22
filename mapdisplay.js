@@ -1,20 +1,36 @@
 var currentMapSource = FiveThirtyEightPollAverageMapSource
 
-var selectedPartyID
-var partyIDs = ["DEM", "REP"]
-var partyCandiates = {"Biden":0, "Trump":1}
-var marginColorValues = [15, 5, 1, 0]
-var marginColors = [["#1c408c", "#587ccc", "#8aafff", "#949bb3"], ["#be1c29", "#ff5864", "#ff8b98", "#cf8980"]]
+var selectedParty
+var marginValues = {safe: 15, likely: 5, lean: 1, tilt: 0}
 
-const regionNameToID = {"Alabama":"AL", "Alaska":"AK", "Arizona":"AZ", "Arkansas":"AR", "California":"CA", "Colorado":"CO", "Connecticut":"CT", "Delaware":"DE", "District of Columbia":"DC", "Florida":"FL", "Georgia":"GA", "Hawaii":"HI", "Idaho":"ID", "Illinois":"IL", "Indiana":"IN", "Iowa":"IA", "Kansas":"KS", "Kentucky":"KY", "Louisiana":"LA", "ME-1":"ME-D1", "ME-2":"ME-D2", "Maine":"ME-AL", "Maryland":"MD", "Massachusetts":"MA", "Michigan":"MI", "Minnesota":"MN", "Mississippi":"MS", "Missouri":"MO", "Montana":"MT", "NE-1":"NE-D1", "NE-2":"NE-D2", "NE-3":"NE-D3", "Nebraska":"NE-AL", "Nevada":"NV", "New Hampshire":"NH", "New Jersey":"NJ", "New Mexico":"NM", "New York":"NY", "North Carolina":"NC", "North Dakota":"ND", "Ohio":"OH", "Oklahoma":"OK", "Oregon":"OR", "Pennsylvania":"PA", "Rhode Island":"RI", "South Carolina":"SC", "South Dakota":"SD", "Tennessee":"TN", "Texas":"TX", "Utah":"UT", "Vermont":"VT", "Virginia":"VA", "Washington":"WA", "West Virginia":"WV", "Wisconsin":"WI", "Wyoming":"WY"}
+var tossupColor = "#6c6e74"
+const tossupName = "Tossup"
 
-const regionEV = {"AL":9, "AK":3, "AZ":11, "AR":6, "CA":55, "CO":9, "CT":7, "DE":3, "DC":3, "FL":29, "GA":16, "HI":4, "ID":4, "IL":20, "IN":11, "IA":6, "KS":6, "KY":8, "LA":8, "ME-D1":1, "ME-D2":1, "ME-AL":2, "MD":10, "MA":11, "MI":16, "MN":10, "MS":6, "MO":10, "MT":3, "NE-D1":1, "NE-D2":1, "NE-D3":1, "NE-AL":2, "NV":6, "NH":4, "NJ":14, "NM":5, "NY":29, "NC":15, "ND":3, "OH":18, "OK":7, "OR":7, "PA":20, "RI":4, "SC":9, "SD":3, "TN":11, "TX":38, "UT":6, "VT":3, "VA":13, "WA":12, "WV":5, "WI":10, "WY":3}
+var marginPieChartIndexes = {}
+marginPieChartIndexes[DemocraticParty.getID()] = ["safe", "likely", "lean", "tilt"]
+marginPieChartIndexes[tossupName] = [tossupName]
+marginPieChartIndexes[RepublicanParty.getID()] = ["tilt", "lean", "likely", "safe"]
+
+var marginPartyPieChartOrder = [DemocraticParty.getID(), tossupName, RepublicanParty.getID()]
+
+const mapRegionNameToID = {"Alabama":"AL", "Alaska":"AK", "Arizona":"AZ", "Arkansas":"AR", "California":"CA", "Colorado":"CO", "Connecticut":"CT", "Delaware":"DE", "District of Columbia":"DC", "Florida":"FL", "Georgia":"GA", "Hawaii":"HI", "Idaho":"ID", "Illinois":"IL", "Indiana":"IN", "Iowa":"IA", "Kansas":"KS", "Kentucky":"KY", "Louisiana":"LA", "ME-1":"ME-D1", "ME-2":"ME-D2", "Maine":"ME-AL", "Maryland":"MD", "Massachusetts":"MA", "Michigan":"MI", "Minnesota":"MN", "Mississippi":"MS", "Missouri":"MO", "Montana":"MT", "NE-1":"NE-D1", "NE-2":"NE-D2", "NE-3":"NE-D3", "Nebraska":"NE-AL", "Nevada":"NV", "New Hampshire":"NH", "New Jersey":"NJ", "New Mexico":"NM", "New York":"NY", "North Carolina":"NC", "North Dakota":"ND", "Ohio":"OH", "Oklahoma":"OK", "Oregon":"OR", "Pennsylvania":"PA", "Rhode Island":"RI", "South Carolina":"SC", "South Dakota":"SD", "Tennessee":"TN", "Texas":"TX", "Utah":"UT", "Vermont":"VT", "Virginia":"VA", "Washington":"WA", "West Virginia":"WV", "Wisconsin":"WI", "Wyoming":"WY"}
+
+const regionEVArray = {
+  2010: {"AL":9, "AK":3, "AZ":11, "AR":6, "CA":55, "CO":9, "CT":7, "DE":3, "DC":3, "FL":29, "GA":16, "HI":4, "ID":4, "IL":20, "IN":11, "IA":6, "KS":6, "KY":8, "LA":8, "ME-D1":1, "ME-D2":1, "ME-AL":2, "MD":10, "MA":11, "MI":16, "MN":10, "MS":6, "MO":10, "MT":3, "NE-D1":1, "NE-D2":1, "NE-D3":1, "NE-AL":2, "NV":6, "NH":4, "NJ":14, "NM":5, "NY":29, "NC":15, "ND":3, "OH":18, "OK":7, "OR":7, "PA":20, "RI":4, "SC":9, "SD":3, "TN":11, "TX":38, "UT":6, "VT":3, "VA":13, "WA":12, "WV":5, "WI":10, "WY":3},
+  2000: {"AL":9, "AK":3, "AZ":10, "AR":6, "CA":55, "CO":9, "CT":7, "DE":3, "DC":3, "FL":27, "GA":15, "HI":4, "ID":4, "IL":21, "IN":11, "IA":7, "KS":6, "KY":8, "LA":9, "ME-D1":1, "ME-D2":1, "ME-AL":2, "MD":10, "MA":12, "MI":17, "MN":10, "MS":6, "MO":11, "MT":3, "NE-D1":1, "NE-D2":1, "NE-D3":1, "NE-AL":2, "NV":5, "NH":4, "NJ":15, "NM":5, "NY":31, "NC":15, "ND":3, "OH":20, "OK":7, "OR":7, "PA":21, "RI":4, "SC":8, "SD":3, "TN":11, "TX":34, "UT":5, "VT":3, "VA":13, "WA":11, "WV":5, "WI":10, "WY":3},
+  1990: {"AL":9, "AK":3, "AZ":8, "AR":6, "CA":54, "CO":8, "CT":8, "DE":3, "DC":3, "FL":25, "GA":13, "HI":4, "ID":4, "IL":22, "IN":12, "IA":7, "KS":6, "KY":8, "LA":9, "ME-D1":1, "ME-D2":1, "ME-AL":2, "MD":10, "MA":12, "MI":18, "MN":10, "MS":7, "MO":11, "MT":3, "NE-D1":1, "NE-D2":1, "NE-D3":1, "NE-AL":2, "NV":4, "NH":4, "NJ":15, "NM":5, "NY":33, "NC":14, "ND":3, "OH":21, "OK":8, "OR":7, "PA":23, "RI":4, "SC":8, "SD":3, "TN":11, "TX":32, "UT":5, "VT":3, "VA":13, "WA":11, "WV":5, "WI":11, "WY":3},
+  1980: {"AL":9, "AK":3, "AZ":7, "AR":6, "CA":47, "CO":8, "CT":8, "DE":3, "DC":3, "FL":21, "GA":12, "HI":4, "ID":4, "IL":24, "IN":12, "IA":8, "KS":7, "KY":9, "LA":10, "ME-D1":1, "ME-D2":1, "ME-AL":2, "MD":10, "MA":13, "MI":20, "MN":10, "MS":7, "MO":11, "MT":4, "NE-D1":1, "NE-D2":1, "NE-D3":1, "NE-AL":2, "NV":4, "NH":4, "NJ":16, "NM":5, "NY":36, "NC":13, "ND":3, "OH":23, "OK":8, "OR":7, "PA":25, "RI":4, "SC":8, "SD":3, "TN":11, "TX":29, "UT":5, "VT":3, "VA":12, "WA":10, "WV":6, "WI":11, "WY":3},
+  1970: {"AL":9, "AK":3, "AZ":6, "AR":6, "CA":45, "CO":7, "CT":8, "DE":3, "DC":3, "FL":17, "GA":12, "HI":4, "ID":4, "IL":26, "IN":13, "IA":8, "KS":7, "KY":9, "LA":10, "ME-D1":1, "ME-D2":1, "ME-AL":2, "MD":10, "MA":14, "MI":21, "MN":10, "MS":7, "MO":12, "MT":4, "NE-D1":1, "NE-D2":1, "NE-D3":1, "NE-AL":2, "NV":3, "NH":4, "NJ":17, "NM":4, "NY":41, "NC":13, "ND":3, "OH":25, "OK":8, "OR":6, "PA":27, "RI":4, "SC":8, "SD":4, "TN":10, "TX":26, "UT":4, "VT":3, "VA":12, "WA":9, "WV":6, "WI":11, "WY":3}
+}
+
 const linkedRegions = [["MD", "MD-button"], ["DE", "DE-button"], ["NJ", "NJ-button"], ["CT", "CT-button"], ["RI", "RI-button"], ["MA", "MA-button"], ["VT", "VT-button"], ["NH", "NH-button"], ["HI", "HI-button"], ["ME-AL", "ME-AL-land"], ["ME-D1", "ME-D1-land"], ["ME-D2", "ME-D2-land"], ["NE-AL", "NE-AL-land"], ["NE-D1", "NE-D1-land"], ["NE-D2", "NE-D2-land"], ["NE-D3", "NE-D3-land"]]
 
 var displayRegionDataArray = {}
 var regionIDsToIgnore = [/.+-button/, /.+-land/]
 
 var showingDataMap = false
+
+var ignoreMapUpdateClickArray = []
 
 var currentSliderDate
 const initialKeyPressDelay = 500
@@ -39,6 +55,9 @@ const minEVPieChartSliceLabelBrightness = 0.7
 $(function() {
   $("#loader").hide()
   resizeElements(false)
+
+  createMapSourceDropdownItems()
+  addDivEventListeners()
 
   populateRegionsArray()
   displayPartyTotals(getPartyTotals())
@@ -81,28 +100,62 @@ function resizeElements(initilizedPieChart)
   }
 }
 
-function loadDataMap(shouldSetToMax)
+function createMapSourceDropdownItems()
+{
+  for (sourceNum in mapSourceIDs)
+  {
+    $("#dropdownItemsContainer").append("<div class='dropdown-separator'></div>")
+    //\"sourceToggleButton\":{loading: \"./assets/icon-loading.png\", error: \"./assets/icon-error.png\", success: \"./assets/icon-success.png\"}, \"" +
+    $("#dropdownItemsContainer").append("<a id='" + mapSourceIDs[sourceNum].replace(/\s/g, '') + "' onclick='updateMapSource(\"" + mapSourceIDs[sourceNum] + "\", \"#sourceToggleButton\")'>" + mapSourceIDs[sourceNum] + "<span id='" + mapSourceIDs[sourceNum].replace(/\s/g, '') + "-icon' style='float:right;' onclick='downloadDataForMapSource(\"" + mapSourceIDs[sourceNum] + "\", {\"" + mapSourceIDs[sourceNum].replace(/\s/g, '') + "-icon\":{loading: \"./assets/icon-loading.png\", error: \"./assets/icon-download-none.png\", success: \"./assets/icon-download-complete.png\", top: -1, width: 24, height: 24}}, \"" + mapSourceIDs[sourceNum].replace(/\s/g, '') + "\", true)'><img class='status' src='./assets/icon-download-none.png' style='position: relative; top: -1px; width: 24px; height: 24px;' /></span></a>")
+  }
+}
+
+function addDivEventListeners()
+{
+  document.getElementById("clearMapButton").addEventListener('click', function(e) {
+    clearMap()
+
+    if (e.altKey)
+    {
+      for (mapSourceID in mapSources)
+      {
+        mapSources[mapSourceID].clearMapData()
+        removeStatusImage(mapSourceID.replace(/\s/g, '') + "-icon")
+        insertStatusImage(mapSourceID.replace(/\s/g, '') + "-icon", "./assets/icon-download-none.png", 24, 24, -1)
+      }
+    }
+  })
+
+  document.getElementById("sourceToggleButton").addEventListener('click', function(e) {
+    if (!e.altKey)
+    {
+      toggleMapSource(this)
+    }
+    else
+    {
+      downloadAllMapData()
+    }
+  })
+}
+
+function getIconDivsToUpdateArrayForSourceID(mapSourceID)
+{
+  var iconDivID = mapSourceID.replace(/\s/g, '') + "-icon"
+  //{"sourceToggleButton":{loading: "./assets/icon-loading.png", error: "./assets/icon-error.png", success: "./assets/icon-success.png"}}
+  var iconDivDictionary = {}
+  iconDivDictionary[iconDivID] = {loading: "./assets/icon-loading.png", error: "./assets/icon-download-none.png", success: "./assets/icon-download-complete.png", top: -1, width: 24, height: 24}
+
+  return iconDivDictionary
+}
+
+function loadDataMap(shouldSetToMax, forceDownload)
 {
   var loadDataMapPromise = new Promise(async (resolve, reject) => {
     $("#dataMapDateSliderContainer").hide()
     $("#dateDisplay").hide()
 
-    insertStatusImage("sourceToggleButton", "./assets/icon-loading.png")
-    var loadedSuccessfully = await currentMapSource.loadMap()
-    removeStatusImage("sourceToggleButton")
-
-    if (!loadedSuccessfully)
-    {
-      insertStatusImage("sourceToggleButton", "./assets/icon-error.png")
-      resolve()
-      return
-    }
-    else
-    {
-      $("#dataMapDateSliderContainer").show()
-      $("#dateDisplay").show()
-      insertStatusImage("sourceToggleButton", "./assets/icon-success.png")
-    }
+    var iconDivDictionary = getIconDivsToUpdateArrayForSourceID(currentMapSource.getID())
+    await downloadDataForMapSource(currentMapSource.getID(), iconDivDictionary, null, forceDownload)
 
     setDataMapDateSliderRange(shouldSetToMax)
     displayDataMap()
@@ -115,22 +168,68 @@ function loadDataMap(shouldSetToMax)
   return loadDataMapPromise
 }
 
+function downloadDataForMapSource(mapSourceID, divsToUpdateStatus, mapIDToIgnore, forceDownload)
+{
+  if (mapIDToIgnore != null)
+  {
+    ignoreMapUpdateClickArray.push(mapIDToIgnore)
+  }
+  var downloadDataPromise = new Promise(async (resolve, reject) => {
+    for (divID in divsToUpdateStatus)
+    {
+      removeStatusImage(divID)
+    }
+
+    for (divID in divsToUpdateStatus)
+    {
+      insertStatusImage(divID, divsToUpdateStatus[divID].loading, divsToUpdateStatus[divID].width, divsToUpdateStatus[divID].height, divsToUpdateStatus[divID].top)
+    }
+
+    var loadedSuccessfully = await mapSources[mapSourceID].loadMap(forceDownload)
+    for (divID in divsToUpdateStatus)
+    {
+      removeStatusImage(divID)
+    }
+
+    if (!loadedSuccessfully)
+    {
+      for (divID in divsToUpdateStatus)
+      {
+        insertStatusImage(divID, divsToUpdateStatus[divID].error, divsToUpdateStatus[divID].width, divsToUpdateStatus[divID].height, divsToUpdateStatus[divID].top)
+      }
+      return
+    }
+    else
+    {
+      for (divID in divsToUpdateStatus)
+      {
+        insertStatusImage(divID, divsToUpdateStatus[divID].success, divsToUpdateStatus[divID].width, divsToUpdateStatus[divID].height, divsToUpdateStatus[divID].top)
+      }
+      resolve()
+    }
+  })
+
+  return downloadDataPromise
+}
+
 async function downloadAllMapData()
 {
-  $("#downloadButton").html("Downloading")
-  insertStatusImage("downloadButton", "./assets/icon-loading.png")
   for (sourceIDNum in mapSourceIDs)
   {
-    await mapSources[mapSourceIDs[sourceIDNum]].loadMap(true)
-  }
+    var sourcesLoaded = 0
+    var iconDivDictionary = getIconDivsToUpdateArrayForSourceID(mapSourceIDs[sourceIDNum])
+    downloadDataForMapSource(mapSourceIDs[sourceIDNum], iconDivDictionary, null, true).then(function() {
+      if (showingDataMap && mapSourceIDs[sourceIDNum] == currentMapSource.getID())
+      {
+        loadDataMap(true)
+      }
 
-  var endDate = FiveThirtyEightPollAverageMapSource.getDateRange().end //Hardcoding 538 polls as most recent end date
-  $("#downloadButton").html("Download (" + (endDate.getMonth()+1) + "/" + endDate.getDate() + ")")
-  insertStatusImage("downloadButton", "./assets/icon-success.png")
-
-  if (showingDataMap)
-  {
-    loadDataMap(true)
+      sourcesLoaded += 1
+      if (sourcesLoaded < mapSourceIDs.length)
+      {
+        $("#loader").show()
+      }
+    })
   }
 }
 
@@ -209,6 +308,9 @@ function displayDataMap(dateIndex)
 
   updateSliderDateDisplay(dateToDisplay, overrideDateString)
 
+  updatePoliticalPartyCandidateNames(dateToDisplay.getTime())
+  updateMapElectoralVoteText()
+
   var currentMapDataForDate = currentMapSource.getMapData()[dateToDisplay.getTime()]
 
   for (regionNum in currentMapDataForDate)
@@ -218,7 +320,7 @@ function displayDataMap(dateIndex)
     var regionsToFill = regionDataCallback.linkedRegionIDs
 
     regionData.margin = currentMapDataForDate[regionNum].margin
-    regionData.party = currentMapDataForDate[regionNum].party
+    regionData.partyID = currentMapDataForDate[regionNum].partyID
     regionData.chanceIncumbent = currentMapDataForDate[regionNum].chanceIncumbent
     regionData.chanceChallenger = currentMapDataForDate[regionNum].chanceChallenger
 
@@ -230,6 +332,35 @@ function displayDataMap(dateIndex)
   showingDataMap = true
 }
 
+function updatePoliticalPartyCandidateNames(mapDate)
+{
+  var candidateNames = currentMapSource.getCandidateNames(mapDate)
+  for (partyID in politicalParties)
+  {
+    if (partyID in candidateNames)
+    {
+      politicalParties[partyID].setCandidateName(candidateNames[partyID])
+    }
+  }
+}
+
+function updateMapElectoralVoteText()
+{
+  var regionIDs = Object.values(mapRegionNameToID)
+  for (regionNum in regionIDs)
+  {
+    var regionChildren = $("#" + regionIDs[regionNum] + "-text").children()
+    if (regionChildren.length == 1)
+    {
+      regionChildren[0].innerHTML = regionIDs[regionNum] + " " + regionEVArray[getCurrentDecade()][regionIDs[regionNum]]
+    }
+    else if (regionChildren.length == 2)
+    {
+      regionChildren[1].innerHTML = regionEVArray[getCurrentDecade()][regionIDs[regionNum]]
+    }
+  }
+}
+
 function toggleMapSource(buttonDiv)
 {
   var mapSourceArrayIndex = mapSourceIDs.indexOf(currentMapSource.getID())
@@ -238,21 +369,49 @@ function toggleMapSource(buttonDiv)
   {
     mapSourceArrayIndex = 0
   }
-  currentMapSource = mapSources[mapSourceIDs[mapSourceArrayIndex]]
 
-  updateMapSourceButton(buttonDiv)
-  loadDataMap()
+  updateMapSource(mapSourceIDs[mapSourceArrayIndex], buttonDiv)
 }
 
-function updateMapSourceButton(buttonDiv)
+function updateMapSource(sourceID, buttonDiv, forceDownload)
 {
-  $(buttonDiv).html("Source: " + currentMapSource.getID())
+  if (ignoreMapUpdateClickArray.includes(sourceID.replace(/\s/g, '')))
+  {
+    ignoreMapUpdateClickArray.splice(ignoreMapUpdateClickArray.indexOf(sourceID), 1)
+    return
+  }
+  currentMapSource = mapSources[sourceID]
+
+  updateMapSourceButton()
+  loadDataMap(false, forceDownload)
+}
+
+function updateMapSourceButton(revertToDefault)
+{
+  revertToDefault = revertToDefault || false
+  $("#dropdownItemsContainer .active").removeClass("active")
+  if (revertToDefault)
+  {
+    $("#sourceToggleButton").html("Select Source")
+  }
+  else
+  {
+    $("#sourceToggleButton").html("Source: " + currentMapSource.getID())
+    $("#" + currentMapSource.getID().replace(/\s/g, '')).addClass("active")
+  }
 }
 
 function clearMap()
 {
+  updateMapSourceButton(true)
+  currentMapSource = FiveThirtyEightPollAverageMapSource
+
+  updatePoliticalPartyCandidateNames()
+  updateMapElectoralVoteText()
+
   displayRegionDataArray = {}
   populateRegionsArray()
+
   $('#outlines').children().each(function() {
     var regionDataCallback = getRegionData($(this).attr('id'))
     var regionIDsToFill = regionDataCallback.linkedRegionIDs
@@ -265,8 +424,6 @@ function clearMap()
 
   $("#dataMapDateSliderContainer").hide()
   $("#dateDisplay").hide()
-  $("#sourceToggleButton").html("Select Source")
-  currentMapSource = FiveThirtyEightPollAverageMapSource
 
   showingDataMap = false
 }
@@ -310,19 +467,19 @@ function selectParty(div)
   {
     var partyID = $(div).attr('id')
 
-    if (selectedPartyID != null)
+    if (selectedParty != null)
     {
-      $("#" + selectedPartyID).removeClass('active')
+      $("#" + selectedParty.getID()).removeClass('active')
     }
 
-    if (selectedPartyID == partyID)
+    if (selectedParty != null && selectedParty.getID() == partyID)
     {
-      selectedPartyID = null
+      selectedParty = null
       $(div).removeClass('active')
     }
     else
     {
-      selectedPartyID = partyID
+      selectedParty = politicalParties[partyID]
       $(div).addClass('active')
     }
   }
@@ -340,7 +497,7 @@ function deselectAllParties()
   $("#partyButtonDiv").children().each(function() {
     $(this).removeClass('active')
   })
-  selectedPartyID = null
+  selectedParty = null
 }
 
 function toggleEditing()
@@ -382,34 +539,35 @@ function leftClickRegion(div)
     var regionData = regionDataCallback.regionData
     var regionIDsToFill = regionDataCallback.linkedRegionIDs
 
-    if (partyIDs[regionData.party] != selectedPartyID)
+    if (selectedParty != null && regionData.partyID != selectedParty.getID())
     {
-      regionData.party = partyIDs.indexOf(selectedPartyID)
-      regionData.margin = marginColorValues[0]
+      regionData.partyID = selectedParty.getID()
+      regionData.margin = marginValues.safe
     }
     else
     {
-      var marginValueIndex = marginColorValues.indexOf(regionData.margin)
+      var marginValueArray = Object.values(marginValues)
+      var marginValueIndex = marginValueArray.indexOf(regionData.margin)
       if (marginValueIndex == -1)
       {
-        for (marginValueNum in marginColorValues)
+        for (marginValueNum in marginValueArray)
         {
-          if (regionData.margin >= marginColorValues[marginValueNum])
+          if (regionData.margin >= marginValueArray[marginValueNum])
           {
-            regionData.margin = marginColorValues[marginValueNum]
+            regionData.margin = marginValueArray[marginValueNum]
             break
           }
         }
-        marginValueIndex = marginColorValues.indexOf(regionData.margin)
+        marginValueIndex = marginValueArray.indexOf(regionData.margin)
       }
 
       marginValueIndex += 1
-      if (marginValueIndex > marginColorValues.length-1)
+      if (marginValueIndex > marginValueArray.length-1)
       {
         marginValueIndex = 0
       }
 
-      regionData.margin = marginColorValues[marginValueIndex]
+      regionData.margin = marginValueArray[marginValueIndex]
     }
 
     updateRegionFillColors(regionIDsToFill, regionData)
@@ -428,34 +586,35 @@ function rightClickRegion(div)
     var regionData = regionDataCallback.regionData
     var regionIDsToFill = regionDataCallback.linkedRegionIDs
 
-    if (partyIDs[regionData.party] != selectedPartyID)
+    if (regionData.partyID != selectedParty.getID())
     {
-      regionData.party = partyIDs.indexOf(selectedPartyID)
+      regionData.partyID = selectedParty.getID()
       regionData.margin = 0
     }
     else
     {
-      var marginValueIndex = marginColorValues.indexOf(regionData.margin)
+      var marginValueArray = Object.values(marginValues)
+      var marginValueIndex = marginValueArray.indexOf(regionData.margin)
       if (marginValueIndex == -1)
       {
-        for (marginValueNum in marginColorValues)
+        for (marginValueNum in marginValueArray)
         {
-          if (regionData.margin >= marginColorValues[marginValueNum])
+          if (regionData.margin >= marginValueArray[marginValueNum])
           {
-            regionData.margin = marginColorValues[marginValueNum]
+            regionData.margin = marginValueArray[marginValueNum]
             break
           }
         }
-        marginValueIndex = marginColorValues.indexOf(regionData.margin)
+        marginValueIndex = marginValueArray.indexOf(regionData.margin)
       }
 
       marginValueIndex -= 1
       if (marginValueIndex < 0)
       {
-        marginValueIndex = marginColorValues.length-1
+        marginValueIndex = marginValueArray.length-1
       }
 
-      regionData.margin = marginColorValues[marginValueIndex]
+      regionData.margin = marginValueArray[marginValueIndex]
     }
 
     updateRegionFillColors(regionIDsToFill, regionData)
@@ -507,13 +666,13 @@ function getBaseRegionID(regionID)
 function updateRegionFillColors(regionIDsToUpdate, regionData, shouldUpdatePieChart)
 {
   var fillColor
-  if (regionData.party == -1)
+  if (regionData.partyID == null)
   {
     fillColor = "#6c6e74"
   }
   else
   {
-    fillColor = getFillColorForMargin(regionData.margin, regionData.party)
+    fillColor = politicalParties[regionData.partyID].getMarginColors()[getFillColorForMargin(regionData.margin, regionData.partyID)]
   }
 
   for (regionIDNum in regionIDsToUpdate)
@@ -530,29 +689,30 @@ function updateRegionFillColors(regionIDsToUpdate, regionData, shouldUpdatePieCh
   }
 }
 
-function getFillColorForMargin(margin, party)
+function getFillColorForMargin(margin, partyID)
 {
-  for (marginValueNum in marginColorValues)
+  for (marginName in marginValues)
   {
-    if (Math.abs(margin) >= marginColorValues[marginValueNum])
+    if (Math.abs(margin) >= marginValues[marginName])
     {
-      return marginColors[party][marginValueNum]
+      return marginName
     }
   }
 }
 
 function getPartyTotals()
 {
-  var partyTotals = []
-  for (partyNum in partyIDs)
+  var partyTotals = {}
+
+  for (partyIDNum in politicalPartyIDs)
   {
-    partyTotals.push(0)
+    partyTotals[politicalPartyIDs[partyIDNum]] = 0
   }
 
   for (regionID in displayRegionDataArray)
   {
-    if (displayRegionDataArray[regionID].party == -1) { continue }
-    partyTotals[displayRegionDataArray[regionID].party] += regionEV[regionID]
+    if (displayRegionDataArray[regionID].partyID == null) { continue }
+    partyTotals[displayRegionDataArray[regionID].partyID] += regionEVArray[getCurrentDecade()][regionID]
   }
 
   return partyTotals
@@ -560,35 +720,39 @@ function getPartyTotals()
 
 function displayPartyTotals(partyTotals)
 {
-  for (partyTotalNum in partyTotals)
+  for (partyID in partyTotals)
   {
-    $("#" + partyIDs[partyTotalNum]).html(getKeyByValue(partyCandiates, partyTotalNum) + " (" + partyTotals[partyTotalNum] + ")")
+    $("#" + partyID).html(politicalParties[partyID].getCandidateName() + " (" + partyTotals[partyID] + ")")
   }
 }
 
 function setupEVPieChart()
 {
+  // Hardcoding two parties
+  var democraticPartyColors = DemocraticParty.getMarginColors()
+  var republicanPartyColors = RepublicanParty.getMarginColors()
+
   var data = {
     datasets: [
       {
         data: [0, 0, 0, 0, 538, 0, 0, 0, 0],
         backgroundColor: [
-          marginColors[0][0],
-          marginColors[0][1],
-          marginColors[0][2],
-          marginColors[0][3],
-          "#6c6e74",
-          marginColors[1][3],
-          marginColors[1][2],
-          marginColors[1][1],
-          marginColors[1][0]
+          democraticPartyColors.safe,
+          democraticPartyColors.likely,
+          democraticPartyColors.lean,
+          democraticPartyColors.tilt,
+          tossupColor,
+          republicanPartyColors.tilt,
+          republicanPartyColors.lean,
+          republicanPartyColors.likely,
+          republicanPartyColors.safe
         ],
         labels: [
           "Safe Dem",
           "Likely Dem",
           "Lean Dem",
           "Tilt Dem",
-          "Tossup",
+          tossupName,
           "Tilt Rep",
           "Lean Rep",
           "Likely Rep",
@@ -598,9 +762,9 @@ function setupEVPieChart()
       {
         data: [0, 538, 0],
         backgroundColor: [
-          marginColors[0][0],
+          democraticPartyColors.safe,
           "#6c6e74",
-          marginColors[1][0]
+          republicanPartyColors.safe
         ],
         labels: [
           "Democratic",
@@ -674,10 +838,10 @@ function setupEVPieChart()
 
 function updateEVPieChart()
 {
-  var marginTotals = []
-  for (partyNum in partyIDs)
+  var marginTotals = [] // TODO: Fix hardcoding of two parties for pie chart; Use object for marginTotals, etc
+  for (partyIDNum in politicalPartyIDs)
   {
-    for (marginNum in marginColors[partyNum])
+    for (marginNum in politicalParties[politicalPartyIDs[partyIDNum]].getMarginColors())
     {
       marginTotals.push(0)
     }
@@ -685,9 +849,9 @@ function updateEVPieChart()
   marginTotals.push(0) // Add tossup
 
   regionMarginStrings = []
-  for (partyNum in partyIDs)
+  for (partyIDNum in politicalPartyIDs)
   {
-    for (marginNum in marginColors[partyNum])
+    for (marginNum in politicalParties[politicalPartyIDs[partyIDNum]].getMarginColors())
     {
       regionMarginStrings.push([])
     }
@@ -696,20 +860,30 @@ function updateEVPieChart()
 
   for (regionID in displayRegionDataArray)
   {
-    var regionParty = displayRegionDataArray[regionID].party
+    var regionParty = displayRegionDataArray[regionID].partyID
     var regionMargin = displayRegionDataArray[regionID].margin
-    var marginIndex
-    if (regionParty == -1)
+    var pieChartIndex
+    if (regionParty == null)
     {
-      marginIndex = marginColors[0].length-1+1
+      pieChartIndex = 0
+      for (partyIDNum in marginPartyPieChartOrder)
+      {
+        if (marginPartyPieChartOrder[partyIDNum] == tossupName) { break }
+        pieChartIndex += marginPieChartIndexes[marginPartyPieChartOrder[partyIDNum]].length
+      }
     }
     else
     {
-      marginIndex = marginColors[regionParty].indexOf(getFillColorForMargin(regionMargin, regionParty))
+      pieChartIndex = 0
+      for (partyIDNum in marginPartyPieChartOrder)
+      {
+        if (marginPartyPieChartOrder[partyIDNum] == regionParty) { break }
+        pieChartIndex += marginPieChartIndexes[marginPartyPieChartOrder[partyIDNum]].length
+      }
+      pieChartIndex += marginPieChartIndexes[regionParty].indexOf(getFillColorForMargin(regionMargin, regionParty))
     }
 
-    var pieChartIndex = (regionParty == -1 ? marginIndex : (regionParty == 0 ? marginIndex : marginColors[0].length-1+1+marginColors[0].length-marginIndex))  // Hardcoding party 0, 1 indexes for dataset
-    marginTotals[pieChartIndex] += regionEV[regionID]
+    marginTotals[pieChartIndex] += regionEVArray[getCurrentDecade()][regionID]
     regionMarginStrings[pieChartIndex].push(regionID + " +" + decimalPadding(Math.round(regionMargin*10)/10))
   }
 
@@ -720,7 +894,7 @@ function updateEVPieChart()
     })
   }
 
-  var partyTotals = getPartyTotals()
+  var partyTotals = Object.values(getPartyTotals())
   var evNotTossup = 0
   for (partyTotalNum in partyTotals)
   {
@@ -728,7 +902,7 @@ function updateEVPieChart()
   }
   if (partyTotals.length == 0)
   {
-    for (partyNum in partyIDs)
+    for (partyIDNum in politicalPartyIDs)
     {
       partyTotals.push(0)
     }
@@ -752,28 +926,33 @@ function updateEVPieChart()
   evPieChart.update()
 }
 
+function getCurrentDecade()
+{
+  return currentSliderDate == null ? 2010 : (Math.floor((currentSliderDate.getFullYear()-1)/10)*10)
+}
+
 function updateStateBox(regionID)
 {
   var regionData = getRegionData(regionID).regionData
-  if (regionData.party == -1) { return }
+  if (regionData.partyID == null) { return }
   $("#stateboxcontainer").show()
 
   var regionMarginString
   var roundedMarginValue = decimalPadding(Math.round(regionData.margin*10)/10)
-  regionMarginString = getKeyByValue(partyCandiates, regionData.party) + " +" + roundedMarginValue
+  regionMarginString = politicalParties[regionData.partyID].getCandidateName() + " +" + roundedMarginValue
 
   if (regionData.chanceChallenger && regionData.chanceIncumbent)
   {
     regionMarginString += "<br></span><span style='font-size: 17px; padding-top: 5px; padding-bottom: 5px; display: block; line-height: 100%;'>Chances<br>"
-    regionMarginString += "<span style='color: " + marginColors[incumbentChallengerPartyNumbers.challenger][2] + ";'>"
+    regionMarginString += "<span style='color: " + politicalParties[incumbentChallengerPartyIDs.challenger].getMarginColors().lean + ";'>" // Hardcoding challenger first
     regionMarginString += decimalPadding(Math.round(regionData.chanceChallenger*1000)/10)
-    regionMarginString += "%</span>&nbsp;&nbsp;&nbsp;<span style='color: " + marginColors[incumbentChallengerPartyNumbers.incumbent][2] + ";'>"
+    regionMarginString += "%</span>&nbsp;&nbsp;&nbsp;<span style='color: " + politicalParties[incumbentChallengerPartyIDs.incumbent].getMarginColors().lean + ";'>"
     regionMarginString += decimalPadding(Math.round(regionData.chanceIncumbent*1000)/10)
     regionMarginString += "%</span></span>"
   }
   //Couldn't get safe colors to look good
-  // + "<span style='color: " + getFillColorForMargin(roundedMarginValue, regionData.party) + "; -webkit-text-stroke-width: 0.5px; -webkit-text-stroke-color: white;'>"
-  $("#statebox").html(getKeyByValue(regionNameToID, currentRegionID) + "<br>" + "<span style='color: " + marginColors[regionData.party][2] + ";'>" + regionMarginString + "</span>")
+  // + "<span style='color: " + politicalParties[regionData.partyID].getMarginColors()[getFillColorForMargin(roundedMarginValue, regionData.partyID)] + "; -webkit-text-stroke-width: 0.5px; -webkit-text-stroke-color: white;'>"
+  $("#statebox").html(getKeyByValue(mapRegionNameToID, currentRegionID) + "<br>" + "<span style='color: " + politicalParties[regionData.partyID].getMarginColors().lean + ";'>" + regionMarginString + "</span>")
 }
 
 function updateElectionDayCountdown()
@@ -899,7 +1078,7 @@ function incrementSlider(keyString)
 }
 
 document.addEventListener('keyup', function(e) {
-  if (e.which >= 37 && e.which <= 40 && showingDataMap)
+  if (e.which >= 37 && e.which <= 40)
   {
     switch (e.which)
     {
@@ -927,10 +1106,10 @@ document.addEventListener('keyup', function(e) {
 })
 
 document.addEventListener('keypress', async function(e) {
-  if (showingDataMap && currentMapState == kViewing && e.which >= 49 && e.which <= 57 && e.which-49 < mapSourceIDs.length)
+  if (currentMapState == kViewing && e.which >= 49 && e.which <= 57 && e.which-49 < mapSourceIDs.length)
   {
     currentMapSource = mapSources[mapSourceIDs[e.which-49]]
-    updateMapSourceButton($("#sourceToggleButton")[0])
+    updateMapSourceButton()
     await loadDataMap()
     if (currentRegionID)
     {
@@ -941,7 +1120,7 @@ document.addEventListener('keypress', async function(e) {
   {
     clearMap()
   }
-  else if (currentMapState == kEditing && e.which >= 48 && e.which <= 57 && e.which-48 <= partyIDs.length)
+  else if (currentMapState == kEditing && e.which >= 48 && e.which <= 57 && e.which-48 <= politicalPartyIDs.length)
   {
     var partyToSelect = e.which-48
     if (partyToSelect == 0)
@@ -950,7 +1129,7 @@ document.addEventListener('keypress', async function(e) {
     }
     else
     {
-      selectParty($("#" + partyIDs[partyToSelect-1]))
+      selectParty($("#" + politicalPartyIDs[partyToSelect-1]))
     }
   }
   else if (e.which == 13)
@@ -1037,7 +1216,7 @@ document.addEventListener('mousemove', function(e) {
   }
 })
 
-document.addEventListener('mouseup', function () {
+document.addEventListener('mouseup', function() {
   if (currentMapState == kEditing)
   {
     regionIDsChanged = []
